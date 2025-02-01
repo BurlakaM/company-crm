@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CompanyRequest;
+use App\Mail\CompanyCreated;
 use App\Models\Company;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 class CompanyController extends Controller
@@ -37,6 +39,7 @@ class CompanyController extends Controller
             $path = $request->file('logo')->store('logos', 'public');
             $company->update(['logo' => $path]);
         }
+        Mail::to('admin@example.com')->send(new CompanyCreated($company));
 
         return redirect()->route('companies.index')->with('success', 'Company created successfully');
     }
