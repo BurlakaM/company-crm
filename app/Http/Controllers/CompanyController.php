@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CompanyRequest;
 use App\Models\Company;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CompanyController extends Controller
 {
@@ -30,14 +31,14 @@ class CompanyController extends Controller
      */
     public function store(CompanyRequest $request)
     {
-        $company = Company::create($request);
+        $company = Company::create($request->validated());
 
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('logos', 'public');
             $company->update(['logo' => $path]);
         }
 
-        return redirect()->route('companies.index');
+        return redirect()->route('companies.index')->with('success', 'Company created successfully');
     }
 
     /**
@@ -46,6 +47,7 @@ class CompanyController extends Controller
     public function show(string $id)
     {
         $company = Company::find($id);
+        if (!$company) abort(404);
         return view('companies.show', ['company' => $company]);
     }
 
@@ -55,17 +57,30 @@ class CompanyController extends Controller
     public function edit(string $id)
     {
         $company = Company::find($id);
+        if (!$company) abort(404);
         return view('companies.edit', ['company' => $company]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(CompanyRequest $request, string $id)
     {
+        $data = $request->validated();
         $company = Company::find($id);
-        $company->update($request);
-        return redirect()->route('companies.index');
+        if (!$company) abort(404);
+        if ($request->hasFile('logo')) {
+            if ($company->logo && Storage::exists('public/' . $company->logo)) {
+                Storage::delete('public/' . $company->logo);
+            }
+            $path = $request->file('logo')->store('logos', 'public');
+            $company->logo = $path;
+        }
+        $company->name = $data['name'];
+        $company->email = $data['email'];
+        $company->website = $data['website'];
+        $company->save();
+        return redirect()->route('companies.index')->with('success', 'Company updated successfully');
     }
 
     /**
@@ -74,7 +89,8 @@ class CompanyController extends Controller
     public function destroy(string $id)
     {
         $company = Company::find($id);
+        if (!$company) abort(404);
         $company->delete();
-        return redirect()->route('companies.index');
+        return redirect()->route('companies.index')->with('success', 'Company deleted successfully');
     }
 }

@@ -30,7 +30,7 @@ class EmployeeController extends Controller
      */
     public function store(EmployeeRequest $request)
     {
-        Employee::create($request);
+        Employee::create($request->validated());
         return redirect()->route('employees.index');
     }
 
@@ -40,6 +40,7 @@ class EmployeeController extends Controller
     public function show(string $id)
     {
         $employee = Employee::find($id);
+        if(!$employee) abort(404);
         return view('employees.show', ['employee' => $employee]);
     }
 
@@ -49,6 +50,7 @@ class EmployeeController extends Controller
     public function edit(string $id)
     {
         $employee = Employee::find($id);
+        if(!$employee) abort(404);
         return view('employees.edit', ['employee' => $employee]);
     }
 
@@ -58,7 +60,8 @@ class EmployeeController extends Controller
     public function update(EmployeeRequest $request, string $id)
     {
         $employee = Employee::find($id);
-        $employee->update($request);
+        if(!$employee) abort(404);
+        $employee->update($request->validated());
         return redirect()->route('employees.index');
     }
 
@@ -68,6 +71,7 @@ class EmployeeController extends Controller
     public function destroy(string $id)
     {
         $employee = Employee::find($id);
+        if(!$employee) abort(404);
         $employee->delete();
         return redirect()->route('employees.index');
     }
